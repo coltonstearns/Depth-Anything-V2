@@ -15,9 +15,10 @@ from depth_anything_v2.dpt import DepthAnythingV2
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--img-path', type=str)
-    parser.add_argument('--input-size', type=int, default=518)
+    parser.add_argument('--input-size', type=int, default=1024)  # was 518!
     parser.add_argument('--outdir', type=str, default='./vis_depth')
     parser.add_argument('--encoder', type=str, default='vitl', choices=['vits', 'vitb', 'vitl', 'vitg'])
+    parser.add_argument('--dataset', type=str, default='vkitti', choices=['vkitti', 'hypersim'])
 
     args = parser.parse_args()
 
@@ -31,6 +32,8 @@ if __name__ == '__main__':
 
     depth_anything = DepthAnythingV2(**model_configs[args.encoder])
     depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_{args.encoder}.pth', map_location='cpu'))
+    # depth_anything.load_state_dict(torch.load(f'checkpoints/depth_anything_v2_metric_{args.dataset}_{args.encoder}.pth', map_location='cpu'))
+
     depth_anything = depth_anything.to(DEVICE).eval()
 
     # get rgb filenames
@@ -51,6 +54,8 @@ if __name__ == '__main__':
         depth[depth == 0] = 1/FAR_PLANE
         depth = 1 / depth
         print(depth.shape)
+        # print(depth.min())
+        # print(depth.max())
         filename = os.path.basename(filename)
         outpath = os.path.join(args.outdir, filename.replace('png', 'npy'))
         np.save(outpath, depth)
